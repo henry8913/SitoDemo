@@ -9,7 +9,7 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      height: 100vh;
+      height: 80vh;
       background-color: #1e1e1e;
       margin: 0;
       font-family: 'Poppins', sans-serif;
@@ -21,7 +21,7 @@
       width: 90vw;
       max-width: 300px;
       height: auto;
-      margin: 20px 0;
+      margin: 10px 0;
     }
     .music-controls {
       display: flex;
@@ -46,19 +46,13 @@
       justify-content: center;
       width: 100%;
       gap: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
     .control-button {
-      width: 15vw;
-      height: 15vw;
-      max-width: 60px;
-      max-height: 60px;
-      background-color: #61dafb;
-      border: none;
-      border-radius: 50%;
-      font-size: 24px;
-      color: #fff;
-    }
+      width: 12vw;
+      height: 12vw;
+      max-width: 50px;
+      max-height: 50px;}
   </style>
 </head>
 <body>
@@ -67,7 +61,7 @@
     <button class="music-button" id="pauseMusic">Pause Music</button>
     <button class="music-button" id="pauseGame">Pause Game</button>
   </div>
-  <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+  <canvas id="tetrisCanvas" width="300" height="480"></canvas>
   <div class="controls">
     <button class="control-button" id="left">&#8592;</button>
     <button class="control-button" id="rotate">&#8593;</button>
@@ -81,7 +75,7 @@
   <script>
     const canvas = document.getElementById('tetrisCanvas');
     const ctx = canvas.getContext('2d');
-    const ROWS = 20;
+    const ROWS = 16;
     const COLUMNS = 10;
     const BLOCK_SIZE = canvas.width / COLUMNS;
 
