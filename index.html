@@ -1,15 +1,239 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css">
-    <title>Home</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tetris Game</title>
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #1e1e1e;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+    }
+    canvas {
+      border: 4px solid #61dafb;
+      background-color: #222;
+    }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      display: flex;
+      justify-content: center;
+      width: 100%;
+      gap: 10px;
+    }
+    .control-button {
+      width: 60px;
+      height: 60px;
+      background-color: #61dafb;
+      border: none;
+      border-radius: 50%;
+      font-size: 24px;
+      color: #fff;
+    }
+  </style>
 </head>
 <body>
-    <div>
-        <h1>Hola</h1>
-        <p>Come stai?</p>
-    </div>
+  <canvas id="tetrisCanvas" width="300" height="600"></canvas>
+  <div class="controls">
+    <button class="control-button" id="left">&#8592;</button>
+    <button class="control-button" id="rotate">&#8593;</button>
+    <button class="control-button" id="right">&#8594;</button>
+    <button class="control-button" id="down">&#8595;</button>
+  </div>
+  <audio id="backgroundMusic" loop>
+    <source src="esound.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+  <script>
+    const canvas = document.getElementById('tetrisCanvas');
+    const ctx = canvas.getContext('2d');
+    const ROWS = 20;
+    const COLUMNS = 10;
+    const BLOCK_SIZE = 30;
+
+    const SHAPES = [
+      [[1, 1, 1, 1]], // I shape
+      [[1, 1], [1, 1]], // O shape
+      [[0, 1, 0], [1, 1, 1]], // T shape
+      [[1, 0, 0], [1, 1, 1]], // L shape
+      [[0, 0, 1], [1, 1, 1]], // J shape
+      [[1, 1, 0], [0, 1, 1]], // S shape
+      [[0, 1, 1], [1, 1, 0]] // Z shape
+    ];
+
+    const COLORS = [
+      '#FF0D72',
+      '#0DC2FF',
+      '#0DFF72',
+      '#F538FF',
+      '#FF8E0D',
+      '#FFE138',
+      '#3877FF'
+    ];
+
+    let board = createBoard(ROWS, COLUMNS);
+    let currentPiece = getRandomPiece();
+    let pieceRow = 0;
+    let pieceCol = 3;
+    let gameInterval = setInterval(drawGame, 500);
+
+    const backgroundMusic = document.getElementById('backgroundMusic');
+    backgroundMusic.play();
+
+    function createBoard(rows, cols) {
+      const board = [];
+      for (let r = 0; r < rows; r++) {
+        board.push(new Array(cols).fill(0));
+      }
+      return board;
+    }
+
+    function getRandomPiece() {
+      const index = Math.floor(Math.random() * SHAPES.length);
+      return {
+        shape: SHAPES[index],
+        color: COLORS[index]
+      };
+    }
+
+    function drawGame() {
+      ctx.fillStyle = '#1e1e1e';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLUMNS; c++) {
+          if (board[r][c] !== 0) {
+            ctx.fillStyle = board[r][c];
+            ctx.fillRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            ctx.strokeStyle = '#111';
+            ctx.strokeRect(c * BLOCK_SIZE, r * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          }
+        }
+      }
+
+      ctx.fillStyle = currentPiece.color;
+      for (let r = 0; r < currentPiece.shape.length; r++) {
+        for (let c = 0; c < currentPiece.shape[r].length; c++) {
+          if (currentPiece.shape[r][c] !== 0) {
+            ctx.fillRect((pieceCol + c) * BLOCK_SIZE, (pieceRow + r) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+            ctx.strokeStyle = '#111';
+            ctx.strokeRect((pieceCol + c) * BLOCK_SIZE, (pieceRow + r) * BLOCK_SIZE, BLOCK_SIZE, BLOCK_SIZE);
+          }
+        }
+      }
+
+      pieceRow++;
+      if (collision()) {
+        pieceRow--;
+        placePiece();
+        currentPiece = getRandomPiece();
+        pieceRow = 0;
+        pieceCol = 3;
+        if (collision()) {
+          clearInterval(gameInterval);
+          alert('Game Over');
+        }
+      }
+    }
+
+    function collision() {
+      for (let r = 0; r < currentPiece.shape.length; r++) {
+        for (let c = 0; c < currentPiece.shape[r].length; c++) {
+          if (currentPiece.shape[r][c] !== 0) {
+            let newRow = pieceRow + r;
+            let newCol = pieceCol + c;
+            if (newRow >= ROWS || newCol < 0 || newCol >= COLUMNS || board[newRow][newCol] !== 0) {
+              return true;
+            }
+          }
+        }
+      }
+      return false;
+    }
+
+    function placePiece() {
+      for (let r = 0; r < currentPiece.shape.length; r++) {
+        for (let c = 0; c < currentPiece.shape[r].length; c++) {
+          if (currentPiece.shape[r][c] !== 0) {
+            board[pieceRow + r][pieceCol + c] = currentPiece.color;
+          }
+        }
+      }
+      clearLines();
+    }
+
+    function clearLines() {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (board[r].every(cell => cell !== 0)) {
+          board.splice(r, 1);
+          board.unshift(new Array(COLUMNS).fill(0));
+          r++;
+        }
+      }
+    }
+
+    document.addEventListener('keydown', event => {
+      if (event.key === 'ArrowLeft') {
+        pieceCol--;
+        if (collision()) {
+          pieceCol++;
+        }
+      } else if (event.key === 'ArrowRight') {
+        pieceCol++;
+        if (collision()) {
+          pieceCol--;
+        }
+      } else if (event.key === 'ArrowDown') {
+        pieceRow++;
+        if (collision()) {
+          pieceRow--;
+        }
+      } else if (event.key === 'ArrowUp') {
+        rotatePiece();
+        if (collision()) {
+          rotatePiece(false);
+        }
+      }
+    });
+
+    function rotatePiece(clockwise = true) {
+      const shape = currentPiece.shape;
+      const newShape = shape[0].map((_, index) => shape.map(row => row[index]));
+      currentPiece.shape = clockwise ? newShape.reverse() : newShape.map(row => row.reverse());
+    }
+
+    document.getElementById('left').addEventListener('click', () => {
+      pieceCol--;
+      if (collision()) {
+        pieceCol++;
+      }
+    });
+
+    document.getElementById('right').addEventListener('click', () => {
+      pieceCol++;
+      if (collision()) {
+        pieceCol--;
+      }
+    });
+
+    document.getElementById('down').addEventListener('click', () => {
+      pieceRow++;
+      if (collision()) {
+        pieceRow--;
+      }
+    });
+
+    document.getElementById('rotate').addEventListener('click', () => {
+      rotatePiece();
+      if (collision()) {
+        rotatePiece(false);
+      }
+    });
+  </script>
 </body>
 </html>
